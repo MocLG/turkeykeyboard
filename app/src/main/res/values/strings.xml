@@ -67,5 +67,5 @@
     <string name="vibrate">Vibrate on key press</string>
     <string name="delete_model">Delete model</string>
     <string name="delete_model_confirm">Delete the translation model from this phone? You can download it again later.</string>
-    <string name="about">Translation model: TranslateGemma 4B by Google, provided under the Gemma Terms of Use (https://ai.google.dev/gemma/terms). Inference: llama.cpp (MIT licence). Word lists: FrequencyWords by Hermit Dave, from OpenSubtitles (CC BY SA 4.0). Tip: Clipboard pastes the copied text, and holding it translates the copied text instead. In any app you can also select text and choose \"Translate (Tercüman)\" from the menu.</string>
+    <string name="about">Translation model: TranslateGemma 4B by Google, provided under the Gemma Terms of Use (https://ai.google.dev/gemma/terms). Inference: llama.cpp (MIT licence). Word lists: FrequencyWords by Hermit Dave, from OpenSubtitles (CC BY SA 4.0). Tip: Clipboard pastes the copied text translated in the selected direction. Hold it to paste the text unchanged. In any app you can also select text and choose \"Translate (Tercüman)\" from the menu.</string>
 </resources>

@@ -154,9 +154,9 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         strip.addView(translateBtn)
         strip.addView(swapBtn)
         strip.addView(statusView, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        strip.addView(smallButton(getString(R.string.clipboard_button), chip, fg) { pasteClipboard() }.also {
+        strip.addView(smallButton(getString(R.string.clipboard_button), chip, fg) { pasteTranslated() }.also {
             it.setOnLongClickListener {
-                guarded { translateClipboard() }
+                guarded { pasteClipboard() }
                 true
             }
         })
@@ -500,7 +500,7 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         showIdleStatus()
     }
 
-    private fun translateClipboard() {
+    private fun pasteTranslated() {
         if (job != null) return
         if (translator.state == Translator.State.NO_MODEL) {
             openSetup()
@@ -511,17 +511,29 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
             setStatus(getString(R.string.status_clipboard_empty))
             return
         }
-        val clip = text.take(Prompts.MAX_INPUT_CHARS)
-        val dir = if (settings.direction == Direction.TR_TO_EN) Direction.EN_TO_TR else Direction.TR_TO_EN
+        if (text.length > Prompts.MAX_INPUT_CHARS) {
+            setStatus(getString(R.string.status_too_long, Prompts.MAX_INPUT_CHARS))
+            return
+        }
+        val dir = settings.direction
+        undo = null
         showPanel(getString(R.string.status_translating), insertable = false)
         setStatus(getString(R.string.status_clipboard, dir.label))
-        job = translator.translate(clip, dir,
+        job = translator.translate(text, dir,
             onPartial = { partial -> if (partial.isNotEmpty()) panelText?.text = partial },
             onDone = { result ->
                 job = null
                 updateTranslateButton()
-                result.onSuccess { showPanel(it, insertable = true); showIdleStatus() }
-                    .onFailure { onTranslationFailed(it) }
+                result.onSuccess { translated ->
+                    val ic = currentInputConnection
+                    if (ic != null && translated.isNotBlank() && ic.commitText(translated, 1)) {
+                        hidePanel()
+                        showIdleStatus()
+                    } else {
+                        showPanel(translated, insertable = true)
+                        showIdleStatus()
+                    }
+                }.onFailure { onTranslationFailed(it) }
             })
         updateTranslateButton()
     }
