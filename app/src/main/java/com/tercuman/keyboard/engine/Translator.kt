@@ -5,8 +5,10 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
+import com.tercuman.keyboard.CrashLog
 import com.tercuman.keyboard.Settings
 import com.tercuman.keyboard.model.ModelStore
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.Executors
@@ -68,7 +70,11 @@ class Translator private constructor(private val app: Context) {
             setState(State.NO_MODEL, null)
             return
         }
-        worker.execute { loadBlocking() }
+        worker.execute {
+            busy(true)
+            loadBlocking()
+            busy(false)
+        }
     }
 
     fun translate(
@@ -83,6 +89,7 @@ class Translator private constructor(private val app: Context) {
         if (state != State.READY && state != State.LOADING) preload()
 
         worker.execute {
+            busy(true)
             val result: Result<String> = try {
                 if (job.cancelled) throw CancellationException()
                 val h = if (handle != 0L) handle else loadBlocking()
@@ -94,7 +101,7 @@ class Translator private constructor(private val app: Context) {
                     if (now - lastPost > 80) {
                         lastPost = now
                         val partial = Prompts.cleanOutput(String(bytes, Charsets.UTF_8))
-                        main.post { if (!job.cancelled) onPartial(partial) }
+                        main.post { if (!job.cancelled) safely("Showing partial translation") { onPartial(partial) } }
                     }
                     !job.cancelled
                 }
@@ -109,7 +116,8 @@ class Translator private constructor(private val app: Context) {
                 Log.w(TAG, "Translation failed", e)
                 Result.failure(e)
             }
-            main.post { onDone(if (job.cancelled) Result.failure(CancellationException()) else result) }
+            busy(false)
+            main.post { safely("Finishing translation") { onDone(if (job.cancelled) Result.failure(CancellationException()) else result) } }
         }
         return job
     }
@@ -153,6 +161,31 @@ class Translator private constructor(private val app: Context) {
             Log.e(TAG, "Model load failed", e)
             setState(State.ERROR, e.message ?: e.toString())
             null
+        }
+    }
+
+    private val busyMarker = File(app.filesDir, "engine_busy")
+
+    init {
+        if (busyMarker.isFile) {
+            CrashLog.recordText(
+                app,
+                "The keyboard was stopped while the model was loading or translating. " +
+                    "This usually means Android closed it because the phone ran low on memory.",
+            )
+            busyMarker.delete()
+        }
+    }
+
+    private fun busy(on: Boolean) {
+        runCatching { if (on) busyMarker.writeText("1") else busyMarker.delete() }
+    }
+
+    private inline fun safely(what: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Throwable) {
+            CrashLog.record(app, what, e)
         }
     }
 

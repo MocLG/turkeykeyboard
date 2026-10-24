@@ -15,6 +15,7 @@ struct EngineConfig {
     int n_threads = 4;
     int n_ctx     = 2048;
     int n_batch   = 512;
+    int n_ubatch  = 128;
 };
 
 struct TranslateResult {

@@ -11,6 +11,8 @@
     <string name="panel_insert">Ekle</string>
     <string name="panel_copy">Kopyala</string>
     <string name="clipboard_button">Pano</string>
+    <string name="clear">Temizle</string>
+    <string name="last_error_title">Son sorun</string>
     <string name="replace">Değiştir</string>
     <string name="copied">Kopyalandı</string>
     <string name="status_no_model">Çeviri modeli yüklü değil. Uygulamayı açmak için dokunun.</string>

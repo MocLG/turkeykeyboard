@@ -11,6 +11,8 @@
     <string name="panel_insert">Insert</string>
     <string name="panel_copy">Copy</string>
     <string name="clipboard_button">Clipboard</string>
+    <string name="clear">Clear</string>
+    <string name="last_error_title">Last problem</string>
     <string name="replace">Replace</string>
     <string name="copied">Copied</string>
     <string name="status_no_model">Translation model not installed. Tap to open the app.</string>

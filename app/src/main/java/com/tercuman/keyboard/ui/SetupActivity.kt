@@ -2,6 +2,8 @@ package com.tercuman.keyboard.ui
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -17,6 +19,7 @@ import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
 import com.tercuman.keyboard.CpuInfo
+import com.tercuman.keyboard.CrashLog
 import com.tercuman.keyboard.R
 import com.tercuman.keyboard.Settings
 import com.tercuman.keyboard.engine.Direction
@@ -87,6 +90,7 @@ class SetupActivity : Activity(), Translator.StateListener {
         translator.addListener(this)
         updateImeStatus()
         startPolling()
+        showLastError()
     }
 
     override fun onPause() {
@@ -343,6 +347,21 @@ class SetupActivity : Activity(), Translator.StateListener {
         findViewById<Switch>(R.id.vibrateSwitch).apply {
             isChecked = settings.vibrate
             setOnCheckedChangeListener { _, v -> settings.vibrate = v }
+        }
+    }
+
+    private fun showLastError() {
+        val section = findViewById<View>(R.id.errorSection)
+        val text = CrashLog.read(this)
+        section.visibility = if (text == null) View.GONE else View.VISIBLE
+        if (text == null) return
+        findViewById<TextView>(R.id.errorText).text = text
+        findViewById<Button>(R.id.errorCopyBtn).setOnClickListener {
+            getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("error", text))
+        }
+        findViewById<Button>(R.id.errorClearBtn).setOnClickListener {
+            CrashLog.clear(this)
+            showLastError()
         }
     }
 

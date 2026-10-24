@@ -96,7 +96,9 @@ bool TranslatorEngine::load(const std::string & model_path, const EngineConfig &
     cfg_ = cfg;
 
     llama_model_params mp = llama_model_default_params();
-    mp.n_gpu_layers = 0;
+    mp.n_gpu_layers    = 0;
+    mp.load_mode       = LLAMA_LOAD_MODE_MMAP;
+    mp.use_extra_bufts = false;
 
     model_ = llama_model_load_from_file(model_path.c_str(), mp);
     if (!model_) {
@@ -107,7 +109,7 @@ bool TranslatorEngine::load(const std::string & model_path, const EngineConfig &
     llama_context_params cp = llama_context_default_params();
     cp.n_ctx           = cfg.n_ctx;
     cp.n_batch         = cfg.n_batch;
-    cp.n_ubatch        = cfg.n_batch;
+    cp.n_ubatch        = cfg.n_ubatch;
     cp.n_threads       = cfg.n_threads;
     cp.n_threads_batch = cfg.n_threads;
     cp.no_perf         = true;

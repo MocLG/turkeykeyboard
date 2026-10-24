@@ -19,6 +19,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.tercuman.keyboard.CrashLog
 import com.tercuman.keyboard.R
 import com.tercuman.keyboard.Settings
 import com.tercuman.keyboard.engine.Direction
@@ -144,7 +145,17 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
                 marginStart = (3 * dp).toInt()
                 marginEnd = (3 * dp).toInt()
             }
-            setOnClickListener { onClick() }
+            setOnClickListener {
+                try {
+                    onClick()
+                } catch (e: Throwable) {
+                    CrashLog.record(this@TercumanIme, "Keyboard button failed", e)
+                    job = null
+                    hidePanel()
+                    updateTranslateButton()
+                    setStatus(getString(R.string.status_error, e.message ?: e.javaClass.simpleName))
+                }
+            }
         }
 
     override fun onStartInputView(info: EditorInfo, restarting: Boolean) {
