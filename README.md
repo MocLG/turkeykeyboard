@@ -6,7 +6,7 @@ An Android keyboard that translates what you type entirely on the phone. After a
 
 * **Translate** button above the keys. It replaces the text in the box, or only the selected part, with its translation. **Undo translation** puts the original back.
 * **⇄** switches between Turkish → English and English → Turkish.
-* **Clipboard** translates the copied text in the opposite direction, so you can read a message you received. The result can be inserted or copied.
+* **Clipboard** (Pano) pastes the text you last copied. Hold it instead to translate the copied text in the opposite direction, so you can read a message you received. The result can be inserted or copied.
 * Works with any other keyboard too (Samsung, Gboard and others). Select text in any app, choose **Translate (Tercüman)** from the selection menu, then **Replace**.
 * QWERTY layout like Samsung. Hold a key for its Turkish letter: u gives ü, o gives ö, i gives ı, s gives ş, g gives ğ, c gives ç. The digit sits to the left of the letter. A Turkish Q layout with separate keys is available in the settings.
 * Word suggestions above the keys, in Turkish or English depending on the direction. They also work when you leave out the Turkish letters, so typing "gorusuruz" suggests "görüşürüz". The keyboard learns your own words and which word usually comes next. Hold a suggestion to forget it.

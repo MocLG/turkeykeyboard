@@ -22,8 +22,8 @@
     <string name="status_empty">Type something first.</string>
     <string name="status_too_long">Text is too long (max %1$d characters). Select a part of it.</string>
     <string name="status_changed">The text changed while translating. Tap Insert to add the translation.</string>
-    <string name="status_clipboard_empty">The clipboard is empty. Copy a message first.</string>
-    <string name="status_clipboard">Clipboard %1$s</string>
+    <string name="status_clipboard_empty">Nothing copied yet. Copy some text first.</string>
+    <string name="status_clipboard">Translating copied text %1$s</string>
     <string name="status_undo_failed">Could not undo: the text has changed.</string>
     <string name="status_hint_tr">Write in Turkish, then tap Translate.</string>
     <string name="status_hint_en">Write in English, then tap Translate.</string>
@@ -67,5 +67,5 @@
     <string name="vibrate">Vibrate on key press</string>
     <string name="delete_model">Delete model</string>
     <string name="delete_model_confirm">Delete the translation model from this phone? You can download it again later.</string>
-    <string name="about">Translation model: TranslateGemma 4B by Google, provided under the Gemma Terms of Use (https://ai.google.dev/gemma/terms). Inference: llama.cpp (MIT licence). Word lists: FrequencyWords by Hermit Dave, from OpenSubtitles (CC BY SA 4.0). Tip: in any app you can also select text and choose \"Translate (Tercüman)\" from the menu.</string>
+    <string name="about">Translation model: TranslateGemma 4B by Google, provided under the Gemma Terms of Use (https://ai.google.dev/gemma/terms). Inference: llama.cpp (MIT licence). Word lists: FrequencyWords by Hermit Dave, from OpenSubtitles (CC BY SA 4.0). Tip: Clipboard pastes the copied text, and holding it translates the copied text instead. In any app you can also select text and choose \"Translate (Tercüman)\" from the menu.</string>
 </resources>

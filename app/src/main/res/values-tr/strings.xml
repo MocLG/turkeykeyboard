@@ -22,8 +22,8 @@
     <string name="status_empty">Önce bir şey yazın.</string>
     <string name="status_too_long">Metin çok uzun (en fazla %1$d karakter). Bir kısmını seçin.</string>
     <string name="status_changed">Çeviri sırasında metin değişti. Çeviriyi eklemek için Ekle\'ye dokunun.</string>
-    <string name="status_clipboard_empty">Pano boş. Önce bir mesaj kopyalayın.</string>
-    <string name="status_clipboard">Pano %1$s</string>
+    <string name="status_clipboard_empty">Henüz bir şey kopyalanmadı. Önce bir metin kopyalayın.</string>
+    <string name="status_clipboard">Kopyalanan metin çevriliyor %1$s</string>
     <string name="status_undo_failed">Geri alınamadı: metin değişmiş.</string>
     <string name="status_hint_tr">Türkçe yazın, sonra Çevir\'e dokunun.</string>
     <string name="status_hint_en">İngilizce yazın, sonra Çevir\'e dokunun.</string>
@@ -67,5 +67,5 @@
     <string name="vibrate">Tuşlarda titreşim</string>
     <string name="delete_model">Modeli sil</string>
     <string name="delete_model_confirm">Çeviri modeli bu telefondan silinsin mi? Daha sonra tekrar indirebilirsiniz.</string>
-    <string name="about">Çeviri modeli: Google\'ın TranslateGemma 4B modeli, Gemma Kullanım Koşulları ile (https://ai.google.dev/gemma/terms). Çalıştırma: llama.cpp (MIT lisansı). Kelime listeleri: Hermit Dave\'in FrequencyWords projesi, OpenSubtitles verisinden (CC BY SA 4.0). İpucu: Herhangi bir uygulamada metni seçip menüden \"Çevir (Tercüman)\"ı da seçebilirsiniz.</string>
+    <string name="about">Çeviri modeli: Google\'ın TranslateGemma 4B modeli, Gemma Kullanım Koşulları ile (https://ai.google.dev/gemma/terms). Çalıştırma: llama.cpp (MIT lisansı). Kelime listeleri: Hermit Dave\'in FrequencyWords projesi, OpenSubtitles verisinden (CC BY SA 4.0). İpucu: Pano kopyalanan metni yapıştırır, basılı tutunca da kopyalanan metni çevirir. Herhangi bir uygulamada metni seçip menüden \"Çevir (Tercüman)\"ı da seçebilirsiniz.</string>
 </resources>

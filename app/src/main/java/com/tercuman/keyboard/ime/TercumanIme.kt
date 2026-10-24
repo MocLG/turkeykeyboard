@@ -154,7 +154,12 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         strip.addView(translateBtn)
         strip.addView(swapBtn)
         strip.addView(statusView, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        strip.addView(smallButton(getString(R.string.clipboard_button), chip, fg) { translateClipboard() })
+        strip.addView(smallButton(getString(R.string.clipboard_button), chip, fg) { pasteClipboard() }.also {
+            it.setOnLongClickListener {
+                guarded { translateClipboard() }
+                true
+            }
+        })
         root.addView(strip)
 
         suggestionSlots = List(3) { i ->
@@ -478,14 +483,30 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         showIdleStatus()
     }
 
+    private fun clipboardText(): String? {
+        val cm = getSystemService(ClipboardManager::class.java) ?: return null
+        val clip = cm.primaryClip?.takeIf { it.itemCount > 0 } ?: return null
+        return clip.getItemAt(0).coerceToText(this)?.toString()?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun pasteClipboard() {
+        val text = clipboardText()
+        if (text == null) {
+            setStatus(getString(R.string.status_clipboard_empty))
+            return
+        }
+        val ic = currentInputConnection ?: return
+        ic.commitText(text, 1)
+        showIdleStatus()
+    }
+
     private fun translateClipboard() {
         if (job != null) return
         if (translator.state == Translator.State.NO_MODEL) {
             openSetup()
             return
         }
-        val cm = getSystemService(ClipboardManager::class.java)
-        val text = cm?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this)?.toString()
+        val text = clipboardText()
         if (text.isNullOrBlank()) {
             setStatus(getString(R.string.status_clipboard_empty))
             return
