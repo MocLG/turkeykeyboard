@@ -32,12 +32,15 @@ class LayoutsTest {
     @Test
     fun qwertyHasTurkishLettersOnLongPress() {
         val keys = Layouts.rows(Page.LETTERS, false, LetterLayout.QWERTY).flatten().associateBy { it.text }
-        assertEquals("ü", keys.getValue("u").alternates.first())
-        assertEquals("ş", keys.getValue("s").alternates.first())
-        assertEquals("ı", keys.getValue("i").alternates.first())
-        assertEquals("ö", keys.getValue("o").alternates.first())
-        assertEquals("ç", keys.getValue("c").alternates.first())
-        assertEquals("ğ", keys.getValue("g").alternates.first())
+        assertEquals("ü", keys.getValue("u").preferredAlternate)
+        assertEquals("ş", keys.getValue("s").preferredAlternate)
+        assertEquals("ı", keys.getValue("i").preferredAlternate)
+        assertEquals("ö", keys.getValue("o").preferredAlternate)
+        assertEquals("ç", keys.getValue("c").preferredAlternate)
+        assertEquals("ğ", keys.getValue("g").preferredAlternate)
+        assertEquals("1", keys.getValue("q").preferredAlternate)
+        assertEquals(listOf("9", "ö", "ô"), keys.getValue("o").alternates)
+        assertEquals(listOf("7", "ü", "û"), keys.getValue("u").alternates)
         assertEquals(listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p"),
             Layouts.rows(Page.LETTERS, false, LetterLayout.QWERTY).first().map { it.text })
     }
@@ -53,7 +56,8 @@ class LayoutsTest {
     fun bottomRowHasSpaceAndEnter() {
         for (page in Page.values()) {
             val bottom = Layouts.rows(page, true).last().map { it.type }
-            assertTrue(KeyType.SPACE in bottom && KeyType.ENTER in bottom && KeyType.GLOBE in bottom)
+            assertTrue(KeyType.SPACE in bottom && KeyType.ENTER in bottom)
+            assertTrue("no keyboard switch key", KeyType.GLOBE !in bottom)
         }
     }
 }

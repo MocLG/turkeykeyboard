@@ -10,7 +10,10 @@ data class Key(
     val width: Float = 1f,
     val gapBefore: Float = 0f,
     val alternates: List<String> = emptyList(),
-)
+    val defaultAlternate: Int = 0,
+) {
+    val preferredAlternate: String? get() = alternates.getOrNull(defaultAlternate)
+}
 
 typealias Row = List<Key>
 
@@ -35,9 +38,9 @@ object Layouts {
         "r" to listOf("4"),
         "t" to listOf("5"),
         "y" to listOf("6"),
-        "u" to listOf("ü", "7", "û"),
-        "i" to listOf("ı", "8", "î"),
-        "o" to listOf("ö", "9", "ô"),
+        "u" to listOf("7", "ü", "û"),
+        "i" to listOf("8", "ı", "î"),
+        "o" to listOf("9", "ö", "ô"),
         "p" to listOf("0"),
         "a" to listOf("â"),
         "s" to listOf("ş"),
@@ -46,7 +49,11 @@ object Layouts {
     )
 
     private fun qwertyKeys(s: String, width: Float): List<Key> =
-        chars(s, width).map { it.copy(alternates = qwertyAlternates[it.text].orEmpty()) }
+        chars(s, width).map { key ->
+            val alts = qwertyAlternates[key.text].orEmpty()
+            val firstLetter = alts.indexOfFirst { it.any(Char::isLetter) }
+            key.copy(alternates = alts, defaultAlternate = if (firstLetter >= 0) firstLetter else 0)
+        }
 
     private val qwerty: List<Row> = listOf(
         qwertyKeys("q w e r t y u i o p", 1.2f),
@@ -77,8 +84,7 @@ object Layouts {
     private fun bottomRow(page: Page): Row = listOf(
         if (page == Page.LETTERS) Key(KeyType.SYMBOLS, "?123", 1.5f) else Key(KeyType.LETTERS, "ABC", 1.5f),
         Key(KeyType.CHAR, ",", 1f),
-        Key(KeyType.GLOBE, "Dil", 1f),
-        Key(KeyType.SPACE, "Türkçe", 5f),
+        Key(KeyType.SPACE, "Türkçe", 6f),
         Key(KeyType.CHAR, ".", 1f),
         Key(KeyType.ENTER, "⏎", 2.5f),
     )

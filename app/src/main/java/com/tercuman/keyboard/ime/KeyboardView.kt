@@ -141,8 +141,9 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
             if (k.type == KeyType.SPACE) textPaint.color = (textColor and 0x00FFFFFF) or 0x80000000.toInt()
             val y = p.rect.centerY() - (textPaint.descent() + textPaint.ascent()) / 2f
             canvas.drawText(label, p.rect.centerX(), y, textPaint)
-            if (k.type == KeyType.CHAR && k.alternates.isNotEmpty() && page == Page.LETTERS) {
-                val hint = displayText(k.alternates.first())
+            val preferred = k.preferredAlternate
+            if (k.type == KeyType.CHAR && preferred != null && page == Page.LETTERS) {
+                val hint = displayText(preferred)
                 textPaint.textSize = 10 * dp
                 textPaint.typeface = Typeface.DEFAULT
                 textPaint.color = (textColor and 0x00FFFFFF) or 0x99000000.toInt()
@@ -193,12 +194,13 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
         val cellW = maxOf(p.rect.width(), 34 * dp)
         val cellH = rowHeight - gap
         val totalW = cellW * options.size
-        var left = p.rect.centerX() - cellW / 2f
+        val selected = p.key.defaultAlternate.coerceIn(0, options.size - 1)
+        var left = p.rect.centerX() - cellW / 2f - selected * cellW
         left = left.coerceIn(gap, maxOf(gap, width - gap - totalW))
         val top = maxOf(0f, p.rect.top - rowHeight)
         popupRects = options.indices.map { i -> RectF(left + i * cellW, top, left + (i + 1) * cellW, top + cellH) }
         popupOptions = options
-        popupSelected = 0
+        popupSelected = selected
         popupPointer = pointerId
         if (vibrate) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         invalidate()
