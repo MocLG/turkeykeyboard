@@ -63,6 +63,7 @@
     <string name="keep_loaded">Keep the model in memory for %1$d min after use</string>
     <string name="number_row">Number row</string>
     <string name="suggestions">Word suggestions above the keys (hold a suggestion to forget it)</string>
+    <string name="autocorrect">Autocorrect: fix typos and add missing Turkish letters when you press space (press backspace right after to undo)</string>
     <string name="turkish_q_layout">Turkish Q layout with separate ğ ü ş ı ö ç keys (off: QWERTY, hold u for ü, s for ş and so on)</string>
     <string name="vibrate">Vibrate on key press</string>
     <string name="delete_model">Delete model</string>

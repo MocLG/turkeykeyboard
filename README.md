@@ -10,6 +10,7 @@ An Android keyboard that translates what you type entirely on the phone. After a
 * Works with any other keyboard too (Samsung, Gboard and others). Select text in any app, choose **Translate (Tercüman)** from the selection menu, then **Replace**. For text you cannot edit, such as a message you received, it translates the other way and shows the result.
 * QWERTY layout like Samsung. Hold a key for its Turkish letter: u gives ü, o gives ö, i gives ı, s gives ş, g gives ğ, c gives ç. The digit sits to the left of the letter. A Turkish Q layout with separate keys is available in the settings.
 * Word suggestions above the keys, in Turkish or English depending on the direction. They also work when you leave out the Turkish letters, so typing "gorusuruz" suggests "görüşürüz". The keyboard learns your own words and which word usually comes next. Hold a suggestion to forget it.
+* Autocorrect (can be turned off in the settings). When you press space or punctuation, clear typos are fixed and missing Turkish letters are added, so "musait" becomes "müsait" and "merhabe" becomes "merhaba". The correction it is about to make is shown as the middle suggestion. Press backspace right after a correction to undo it, and that word is then never corrected again. Words you type often are never changed.
 * The interface is in Turkish when the phone language is Turkish, and in English otherwise.
 
 ## How it works
@@ -75,7 +76,7 @@ Unit tests, plus an end to end test of the Kotlin, JNI and native engine path wi
 
 ## Limitations
 
-* No automatic correction. Suggestions only appear above the keys and are inserted when you tap them.
+* Autocorrect is careful on purpose. It only fixes words that are clearly much rarer than a very similar common word, so some typos are left alone.
 * Up to 2500 characters per translation. Select a part of longer texts.
 * Translation quality is good for everyday messages but not perfect. Check important texts.
 

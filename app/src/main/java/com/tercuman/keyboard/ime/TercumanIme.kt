@@ -52,6 +52,8 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
     private var suggestionBar: LinearLayout? = null
     private var suggestionSlots: List<TextView> = emptyList()
     private var suggestionsAllowed = false
+    private var autocorrectAllowed = false
+    private var lastCorrection: Triple<String, String, String>? = null
     private val predictors = ConcurrentHashMap<Lang, Predictor>()
     private val dictWorker = Executors.newSingleThreadExecutor()
     private val refreshSuggestions = Runnable { updateSuggestions() }
@@ -72,7 +74,8 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
                 val dict = assets.open("dict/${lang.code}.txt").reader(Charsets.UTF_8).use { WordDictionary.parse(it) }
                 val user = UserWords(File(filesDir, "user_words_${lang.code}.tsv"))
                 val locale = Locale.forLanguageTag(lang.code)
-                predictors[lang] = Predictor(dict, user, locale)
+                val known = assets.open("dict/${lang.code}_known.txt").use { KnownWords.of(it.readBytes()) }
+                predictors[lang] = Predictor(dict, user, locale, AutoCorrector(dict, known, user, locale))
                 keyboard?.post { updateSuggestions() }
             } catch (e: Throwable) {
                 CrashLog.record(this, "Loading word list failed", e)
@@ -267,6 +270,12 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
             variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD) ||
             (cls == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD)
         suggestionsAllowed = settings.suggestions && !password && cls == InputType.TYPE_CLASS_TEXT
+        val noAutocorrectField = variation == InputType.TYPE_TEXT_VARIATION_URI ||
+            variation == InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS ||
+            variation == InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS ||
+            (info.inputType and InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS) != 0
+        autocorrectAllowed = suggestionsAllowed && settings.autocorrect && !noAutocorrectField
+        lastCorrection = null
         suggestionBar?.visibility = if (suggestionsAllowed) View.VISIBLE else View.GONE
         updateSuggestions()
 
@@ -295,7 +304,10 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
             val ic = currentInputConnection ?: return@runCatching emptyList()
             if (!ic.getSelectedText(0).isNullOrEmpty()) return@runCatching emptyList()
             val before = ic.getTextBeforeCursor(64, 0)?.toString() ?: return@runCatching emptyList()
-            predictor()?.suggest(Predictor.context(before)).orEmpty()
+            val ctx = Predictor.context(before)
+            val list = predictor()?.suggest(ctx).orEmpty()
+            val fix = correctionFor(before, ctx.partial)
+            if (fix != null) listOf(fix) + list.filter { it != fix } else list
         }.getOrDefault(emptyList())
         val order = when (words.size) {
             0 -> listOf(null, null, null)
@@ -309,12 +321,42 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         }
     }
 
-    private fun learnWordBeforeCursor() {
-        if (!suggestionsAllowed) return
-        val ic = currentInputConnection ?: return
-        val before = ic.getTextBeforeCursor(64, 0)?.toString() ?: return
+    private fun correctionFor(before: String, partial: String): String? {
+        if (!autocorrectAllowed || partial.length < 2) return null
+        val i = before.length - partial.length - 1
+        if (i >= 0 && !before[i].isWhitespace() && before[i] !in "(\"'“‘«") return null
+        return predictor()?.autocorrect(partial)?.takeIf { it != partial }
+    }
+
+    private fun finishWord(): Pair<String, String>? {
+        if (!suggestionsAllowed) return null
+        val ic = currentInputConnection ?: return null
+        val before = ic.getTextBeforeCursor(64, 0)?.toString() ?: return null
         val ctx = Predictor.context(before)
-        if (ctx.partial.length >= 2) predictor()?.learn(ctx.previous, ctx.partial)
+        if (ctx.partial.length < 2) return null
+        val fixed = correctionFor(before, ctx.partial)
+        if (fixed != null) {
+            ic.beginBatchEdit()
+            ic.deleteSurroundingText(ctx.partial.length, 0)
+            ic.commitText(fixed, 1)
+            ic.endBatchEdit()
+        }
+        predictor()?.learn(ctx.previous, fixed ?: ctx.partial)
+        return fixed?.let { ctx.partial to it }
+    }
+
+    private fun revertCorrection(c: Triple<String, String, String>): Boolean {
+        val ic = currentInputConnection ?: return false
+        val (original, fixed, separator) = c
+        val expected = fixed + separator
+        val before = ic.getTextBeforeCursor(expected.length, 0)?.toString() ?: return false
+        if (before != expected) return false
+        ic.beginBatchEdit()
+        ic.deleteSurroundingText(expected.length, 0)
+        ic.commitText(original, 1)
+        ic.endBatchEdit()
+        predictor()?.learn(null, original)
+        return true
     }
 
     private fun pickSuggestion(word: String) {
@@ -336,28 +378,39 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
             undo = null
             showIdleStatus()
         }
+        val correction = lastCorrection
+        if (key.type != KeyType.SHIFT) lastCorrection = null
         when (key.type) {
             KeyType.CHAR -> {
-                if (key.text.none(TextFold::isWordChar)) learnWordBeforeCursor()
+                val separator = key.text.none(TextFold::isWordChar)
+                val fixed = if (separator) finishWord() else null
                 val text = if (kb.page == Page.LETTERS && kb.shift != KeyboardView.ShiftState.OFF) Layouts.upper(key.text) else key.text
                 ic.commitText(text, 1)
+                if (fixed != null) lastCorrection = Triple(fixed.first, fixed.second, text)
                 if (kb.shift == KeyboardView.ShiftState.ONCE) kb.shift = KeyboardView.ShiftState.OFF
             }
             KeyType.SPACE -> {
-                learnWordBeforeCursor()
+                val fixed = finishWord()
                 ic.commitText(" ", 1)
+                if (fixed != null) lastCorrection = Triple(fixed.first, fixed.second, " ")
             }
             KeyType.BACKSPACE -> {
+                if (correction != null && revertCorrection(correction)) return
                 val sel = ic.getSelectedText(0)
                 if (!sel.isNullOrEmpty()) ic.commitText("", 1) else sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
             }
             KeyType.ENTER -> {
-                learnWordBeforeCursor()
+                val fixed = finishWord()
                 val ei = currentInputEditorInfo
                 val action = (ei?.imeOptions ?: 0) and EditorInfo.IME_MASK_ACTION
                 val noAction = ei == null || (ei.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION) != 0 ||
                     action == EditorInfo.IME_ACTION_NONE || action == EditorInfo.IME_ACTION_UNSPECIFIED
-                if (noAction) ic.commitText("\n", 1) else ic.performEditorAction(action)
+                if (noAction) {
+                    ic.commitText("\n", 1)
+                    if (fixed != null) lastCorrection = Triple(fixed.first, fixed.second, "\n")
+                } else {
+                    ic.performEditorAction(action)
+                }
             }
             KeyType.SHIFT -> {
                 capsFromEditor = false

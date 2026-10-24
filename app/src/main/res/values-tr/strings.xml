@@ -63,6 +63,7 @@
     <string name="keep_loaded">Modeli kullanımdan sonra %1$d dk bellekte tut</string>
     <string name="number_row">Rakam satırı</string>
     <string name="suggestions">Tuşların üstünde kelime önerileri (unutmak için öneriye basılı tutun)</string>
+    <string name="autocorrect">Otomatik düzeltme: boşluğa basınca yazım hatalarını düzeltir ve eksik Türkçe harfleri ekler (geri almak için hemen ardından silme tuşuna basın)</string>
     <string name="turkish_q_layout">Ayrı ğ ü ş ı ö ç tuşlu Türkçe Q klavye (kapalı: QWERTY, ü için u\'ya, ş için s\'ye basılı tutun)</string>
     <string name="vibrate">Tuşlarda titreşim</string>
     <string name="delete_model">Modeli sil</string>

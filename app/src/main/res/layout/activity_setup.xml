@@ -193,6 +193,13 @@
             android:text="@string/suggestions" />
 
         <Switch
+            android:id="@+id/autocorrectSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/autocorrect" />
+
+        <Switch
             android:id="@+id/turkishQSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
