@@ -30,6 +30,10 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(KEY_NUMBER_ROW, true)
         set(v) = prefs.edit().putBoolean(KEY_NUMBER_ROW, v).apply()
 
+    var suggestions: Boolean
+        get() = prefs.getBoolean(KEY_SUGGESTIONS, true)
+        set(v) = prefs.edit().putBoolean(KEY_SUGGESTIONS, v).apply()
+
     var turkishQLayout: Boolean
         get() = prefs.getBoolean(KEY_TURKISH_Q, false)
         set(v) = prefs.edit().putBoolean(KEY_TURKISH_Q, v).apply()
@@ -52,6 +56,7 @@ class Settings(context: Context) {
         private const val KEY_THREADS = "threads"
         private const val KEY_MODEL = "model_option"
         private const val KEY_TURKISH_Q = "turkish_q_layout"
+        private const val KEY_SUGGESTIONS = "suggestions"
         private const val KEY_KEEP = "keep_loaded_minutes"
         private const val KEY_DIRECTION = "direction"
         private const val KEY_VIBRATE = "vibrate"

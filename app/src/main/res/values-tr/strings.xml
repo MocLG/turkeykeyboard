@@ -62,9 +62,10 @@
     <string name="threads_n">İşlemci çekirdeği: %1$d</string>
     <string name="keep_loaded">Modeli kullanımdan sonra %1$d dk bellekte tut</string>
     <string name="number_row">Rakam satırı</string>
+    <string name="suggestions">Tuşların üstünde kelime önerileri (unutmak için öneriye basılı tutun)</string>
     <string name="turkish_q_layout">Ayrı ğ ü ş ı ö ç tuşlu Türkçe Q klavye (kapalı: QWERTY, ü için u\'ya, ş için s\'ye basılı tutun)</string>
     <string name="vibrate">Tuşlarda titreşim</string>
     <string name="delete_model">Modeli sil</string>
     <string name="delete_model_confirm">Çeviri modeli bu telefondan silinsin mi? Daha sonra tekrar indirebilirsiniz.</string>
-    <string name="about">Çeviri modeli: Google\'ın TranslateGemma 4B modeli, Gemma Kullanım Koşulları ile (https://ai.google.dev/gemma/terms). Çalıştırma: llama.cpp (MIT lisansı). İpucu: Herhangi bir uygulamada metni seçip menüden \"Çevir (Tercüman)\"ı da seçebilirsiniz.</string>
+    <string name="about">Çeviri modeli: Google\'ın TranslateGemma 4B modeli, Gemma Kullanım Koşulları ile (https://ai.google.dev/gemma/terms). Çalıştırma: llama.cpp (MIT lisansı). Kelime listeleri: Hermit Dave\'in FrequencyWords projesi, OpenSubtitles verisinden (CC BY SA 4.0). İpucu: Herhangi bir uygulamada metni seçip menüden \"Çevir (Tercüman)\"ı da seçebilirsiniz.</string>
 </resources>

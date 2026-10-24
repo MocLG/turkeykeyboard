@@ -371,6 +371,10 @@ class SetupActivity : Activity(), Translator.StateListener {
             isChecked = settings.showNumberRow
             setOnCheckedChangeListener { _, v -> settings.showNumberRow = v }
         }
+        findViewById<Switch>(R.id.suggestionsSwitch).apply {
+            isChecked = settings.suggestions
+            setOnCheckedChangeListener { _, v -> settings.suggestions = v }
+        }
         findViewById<Switch>(R.id.turkishQSwitch).apply {
             isChecked = settings.turkishQLayout
             setOnCheckedChangeListener { _, v -> settings.turkishQLayout = v }

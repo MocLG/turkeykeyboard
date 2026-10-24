@@ -8,7 +8,8 @@ An Android keyboard that translates what you type entirely on the phone. After a
 * **⇄** switches between Turkish → English and English → Turkish.
 * **Clipboard** translates the copied text in the opposite direction, so you can read a message you received. The result can be inserted or copied.
 * Works with any other keyboard too (Samsung, Gboard and others). Select text in any app, choose **Translate (Tercüman)** from the selection menu, then **Replace**.
-* Turkish Q layout with ğ ü ş ı ö ç, Turkish capitalisation (i → İ), number row and symbols.
+* QWERTY layout like Samsung. Hold a key for its Turkish letter: u gives ü, o gives ö, i gives ı, s gives ş, g gives ğ, c gives ç. The digit sits to the left of the letter. A Turkish Q layout with separate keys is available in the settings.
+* Word suggestions above the keys, in Turkish or English depending on the direction. They also work when you leave out the Turkish letters, so typing "gorusuruz" suggests "görüşürüz". The keyboard learns your own words and which word usually comes next. Hold a suggestion to forget it.
 * The interface is in Turkish when the phone language is Turkish, and in English otherwise.
 
 ## How it works
@@ -74,10 +75,10 @@ Unit tests, plus an end to end test of the Kotlin, JNI and native engine path wi
 
 ## Limitations
 
-* No word suggestions or autocorrect. If you want those, type with your usual keyboard and use the selection menu option.
+* No automatic correction. Suggestions only appear above the keys and are inserted when you tap them.
 * Up to 2500 characters per translation. Select a part of longer texts.
 * Translation quality is good for everyday messages but not perfect. Check important texts.
 
 ## Licences
 
-The app code is MIT licensed, and so is llama.cpp. The model is distributed under the Gemma Terms of Use (`https://ai.google.dev/gemma/terms`). It is downloaded from Hugging Face and is not bundled with the app.
+The app code is MIT licensed, and so is llama.cpp. The word lists come from FrequencyWords by Hermit Dave (`https://github.com/hermitdave/FrequencyWords`), built from OpenSubtitles 2018, and are licensed CC BY SA 4.0. The model is distributed under the Gemma Terms of Use (`https://ai.google.dev/gemma/terms`). It is downloaded from Hugging Face and is not bundled with the app.

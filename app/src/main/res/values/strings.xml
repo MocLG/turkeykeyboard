@@ -62,9 +62,10 @@
     <string name="threads_n">CPU threads: %1$d</string>
     <string name="keep_loaded">Keep the model in memory for %1$d min after use</string>
     <string name="number_row">Number row</string>
+    <string name="suggestions">Word suggestions above the keys (hold a suggestion to forget it)</string>
     <string name="turkish_q_layout">Turkish Q layout with separate ğ ü ş ı ö ç keys (off: QWERTY, hold u for ü, s for ş and so on)</string>
     <string name="vibrate">Vibrate on key press</string>
     <string name="delete_model">Delete model</string>
     <string name="delete_model_confirm">Delete the translation model from this phone? You can download it again later.</string>
-    <string name="about">Translation model: TranslateGemma 4B by Google, provided under the Gemma Terms of Use (https://ai.google.dev/gemma/terms). Inference: llama.cpp (MIT licence). Tip: in any app you can also select text and choose \"Translate (Tercüman)\" from the menu.</string>
+    <string name="about">Translation model: TranslateGemma 4B by Google, provided under the Gemma Terms of Use (https://ai.google.dev/gemma/terms). Inference: llama.cpp (MIT licence). Word lists: FrequencyWords by Hermit Dave, from OpenSubtitles (CC BY SA 4.0). Tip: in any app you can also select text and choose \"Translate (Tercüman)\" from the menu.</string>
 </resources>

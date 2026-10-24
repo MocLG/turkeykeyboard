@@ -23,10 +23,15 @@ import com.tercuman.keyboard.CrashLog
 import com.tercuman.keyboard.R
 import com.tercuman.keyboard.Settings
 import com.tercuman.keyboard.engine.Direction
+import com.tercuman.keyboard.engine.Lang
 import com.tercuman.keyboard.engine.Prompts
 import com.tercuman.keyboard.engine.Translator
 import com.tercuman.keyboard.ui.SetupActivity
+import java.io.File
+import java.util.Locale
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 
 class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.StateListener {
     private lateinit var settings: Settings
@@ -44,17 +49,51 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
     private var undo: Pair<String, String>? = null
     private var panelResult: String? = null
     private var capsFromEditor = false
+    private var suggestionBar: LinearLayout? = null
+    private var suggestionSlots: List<TextView> = emptyList()
+    private var suggestionsAllowed = false
+    private val predictors = ConcurrentHashMap<Lang, Predictor>()
+    private val dictWorker = Executors.newSingleThreadExecutor()
+    private val refreshSuggestions = Runnable { updateSuggestions() }
     private val dp by lazy { resources.displayMetrics.density }
 
     override fun onCreate() {
         super.onCreate()
         settings = Settings(this)
         translator = Translator.get(this)
+        loadPredictor(settings.direction.from)
+    }
+
+    private fun loadPredictor(lang: Lang) {
+        if (predictors.containsKey(lang)) return
+        dictWorker.execute {
+            if (predictors.containsKey(lang)) return@execute
+            try {
+                val dict = assets.open("dict/${lang.code}.txt").reader(Charsets.UTF_8).use { WordDictionary.parse(it) }
+                val user = UserWords(File(filesDir, "user_words_${lang.code}.tsv"))
+                val locale = Locale.forLanguageTag(lang.code)
+                predictors[lang] = Predictor(dict, user, locale)
+                keyboard?.post { updateSuggestions() }
+            } catch (e: Throwable) {
+                CrashLog.record(this, "Loading word list failed", e)
+            }
+        }
+    }
+
+    private fun predictor(): Predictor? {
+        val lang = settings.direction.from
+        return predictors[lang] ?: run {
+            loadPredictor(lang)
+            null
+        }
     }
 
     override fun onDestroy() {
         job?.cancel()
         translator.removeListener(this)
+        val toSave = predictors.values.toList()
+        dictWorker.execute { toSave.forEach { it.save() } }
+        dictWorker.shutdown()
         super.onDestroy()
     }
 
@@ -118,11 +157,45 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         strip.addView(smallButton(getString(R.string.clipboard_button), chip, fg) { translateClipboard() })
         root.addView(strip)
 
+        suggestionSlots = List(3) { i ->
+            TextView(this).apply {
+                setTextColor(fg)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+                gravity = Gravity.CENTER
+                maxLines = 1
+                ellipsize = TextUtils.TruncateAt.END
+                if (i == 1) setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setOnClickListener { (tag as? String)?.let { word -> guarded { pickSuggestion(word) } } }
+                setOnLongClickListener {
+                    (tag as? String)?.let { word ->
+                        predictor()?.forget(word)
+                        updateSuggestions()
+                    }
+                    true
+                }
+            }
+        }
+        suggestionBar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            suggestionSlots.forEach { addView(it, LinearLayout.LayoutParams(0, (40 * dp).toInt(), 1f)) }
+        }
+        root.addView(suggestionBar)
+
         keyboard = KeyboardView(this, this).also { root.addView(it) }
 
         updateTranslateButton()
         translator.addListener(this)
         return root
+    }
+
+    private fun guarded(block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Throwable) {
+            CrashLog.record(this, "Keyboard action failed", e)
+            setStatus(getString(R.string.status_error, e.message ?: e.javaClass.simpleName))
+        }
     }
 
     private fun smallButton(text: String, bg: Int, fg: Int, onClick: () -> Unit): Button =
@@ -183,6 +256,15 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         updateTranslateButton()
         showIdleStatus()
 
+        val variation = info.inputType and InputType.TYPE_MASK_VARIATION
+        val password = cls == InputType.TYPE_CLASS_TEXT && (variation == InputType.TYPE_TEXT_VARIATION_PASSWORD ||
+            variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD ||
+            variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD) ||
+            (cls == InputType.TYPE_CLASS_NUMBER && variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD)
+        suggestionsAllowed = settings.suggestions && !password && cls == InputType.TYPE_CLASS_TEXT
+        suggestionBar?.visibility = if (suggestionsAllowed) View.VISIBLE else View.GONE
+        updateSuggestions()
+
         translator.preload()
     }
 
@@ -190,12 +272,56 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         super.onFinishInputView(finishingInput)
         job?.cancel()
         job = null
+        val toSave = predictors.values.toList()
+        if (!dictWorker.isShutdown) dictWorker.execute { toSave.forEach { it.save() } }
     }
 
     override fun onUpdateSelection(oldSelStart: Int, oldSelEnd: Int, newSelStart: Int, newSelEnd: Int,
                                    candidatesStart: Int, candidatesEnd: Int) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
         updateAutoCaps()
+        keyboard?.removeCallbacks(refreshSuggestions)
+        keyboard?.postDelayed(refreshSuggestions, 30)
+    }
+
+    private fun updateSuggestions() {
+        if (!suggestionsAllowed) return
+        val words = runCatching {
+            val ic = currentInputConnection ?: return@runCatching emptyList()
+            if (!ic.getSelectedText(0).isNullOrEmpty()) return@runCatching emptyList()
+            val before = ic.getTextBeforeCursor(64, 0)?.toString() ?: return@runCatching emptyList()
+            predictor()?.suggest(Predictor.context(before)).orEmpty()
+        }.getOrDefault(emptyList())
+        val order = when (words.size) {
+            0 -> listOf(null, null, null)
+            1 -> listOf(null, words[0], null)
+            2 -> listOf(words[1], words[0], null)
+            else -> listOf(words[1], words[0], words[2])
+        }
+        suggestionSlots.forEachIndexed { i, slot ->
+            slot.text = order[i].orEmpty()
+            slot.tag = order[i]
+        }
+    }
+
+    private fun learnWordBeforeCursor() {
+        if (!suggestionsAllowed) return
+        val ic = currentInputConnection ?: return
+        val before = ic.getTextBeforeCursor(64, 0)?.toString() ?: return
+        val ctx = Predictor.context(before)
+        if (ctx.partial.length >= 2) predictor()?.learn(ctx.previous, ctx.partial)
+    }
+
+    private fun pickSuggestion(word: String) {
+        val ic = currentInputConnection ?: return
+        val before = ic.getTextBeforeCursor(64, 0)?.toString().orEmpty()
+        val ctx = Predictor.context(before)
+        ic.beginBatchEdit()
+        if (ctx.partial.isNotEmpty()) ic.deleteSurroundingText(ctx.partial.length, 0)
+        ic.commitText("$word ", 1)
+        ic.endBatchEdit()
+        predictor()?.learn(ctx.previous, word)
+        keyboard?.let { if (it.shift == KeyboardView.ShiftState.ONCE && !capsFromEditor) it.shift = KeyboardView.ShiftState.OFF }
     }
 
     override fun onKey(key: Key) {
@@ -207,16 +333,21 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         }
         when (key.type) {
             KeyType.CHAR -> {
+                if (key.text.none(TextFold::isWordChar)) learnWordBeforeCursor()
                 val text = if (kb.page == Page.LETTERS && kb.shift != KeyboardView.ShiftState.OFF) Layouts.upper(key.text) else key.text
                 ic.commitText(text, 1)
                 if (kb.shift == KeyboardView.ShiftState.ONCE) kb.shift = KeyboardView.ShiftState.OFF
             }
-            KeyType.SPACE -> ic.commitText(" ", 1)
+            KeyType.SPACE -> {
+                learnWordBeforeCursor()
+                ic.commitText(" ", 1)
+            }
             KeyType.BACKSPACE -> {
                 val sel = ic.getSelectedText(0)
                 if (!sel.isNullOrEmpty()) ic.commitText("", 1) else sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL)
             }
             KeyType.ENTER -> {
+                learnWordBeforeCursor()
                 val ei = currentInputEditorInfo
                 val action = (ei?.imeOptions ?: 0) and EditorInfo.IME_MASK_ACTION
                 val noAction = ei == null || (ei.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION) != 0 ||
@@ -341,6 +472,8 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
 
     private fun swapDirection() {
         settings.direction = if (settings.direction == Direction.TR_TO_EN) Direction.EN_TO_TR else Direction.TR_TO_EN
+        loadPredictor(settings.direction.from)
+        updateSuggestions()
         updateTranslateButton()
         showIdleStatus()
     }
