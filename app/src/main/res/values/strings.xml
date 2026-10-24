@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tercüman Keyboard</string>
+    <string name="ime_name">Tercüman (offline translation)</string>
+    <string name="subtype_label">Turkish (Q)</string>
+    <string name="process_text_label">Translate (Tercüman)</string>
+
+    <string name="translate_button">Translate %1$s</string>
+    <string name="stop">Stop</string>
+    <string name="undo">Undo translation</string>
+    <string name="panel_insert">Insert</string>
+    <string name="panel_copy">Copy</string>
+    <string name="clipboard_button">Clipboard</string>
+    <string name="replace">Replace</string>
+    <string name="copied">Copied</string>
+    <string name="status_no_model">Translation model not installed. Tap to open the app.</string>
+    <string name="status_loading">Loading translator…</string>
+    <string name="status_translating">Translating…</string>
+    <string name="status_error">Error: %1$s</string>
+    <string name="status_empty">Type something first.</string>
+    <string name="status_too_long">Text is too long (max %1$d characters). Select a part of it.</string>
+    <string name="status_changed">The text changed while translating. Tap Insert to add the translation.</string>
+    <string name="status_clipboard_empty">The clipboard is empty. Copy a message first.</string>
+    <string name="status_clipboard">Clipboard %1$s</string>
+    <string name="status_undo_failed">Could not undo: the text has changed.</string>
+    <string name="status_hint_tr">Write in Turkish, then tap Translate.</string>
+    <string name="status_hint_en">Write in English, then tap Translate.</string>
+
+    <string name="setup_intro">A keyboard that translates what you write, entirely on this phone. Nothing you type is sent anywhere.</string>
+    <string name="setup_model_title">1. Translation model</string>
+    <string name="setup_keyboard_title">2. Turn on the keyboard</string>
+    <string name="setup_try_title">3. Try it</string>
+    <string name="settings_title">Settings</string>
+    <string name="download">Download</string>
+    <string name="retry">Try again</string>
+    <string name="cancel">Cancel</string>
+    <string name="import_model">Use a model file…</string>
+    <string name="model_not_installed">%1$s is not installed yet (%2$s). It is downloaded once. After that, translation works without internet. WiFi recommended.</string>
+    <string name="model_downloading">Downloading the translation model: %1$s / %2$s. You can leave this screen and the download continues.</string>
+    <string name="model_verifying">Checking the downloaded file…</string>
+    <string name="model_installed">Installed: %1$s (%2$s).</string>
+    <string name="engine_idle">Ready. The model loads when you use the keyboard.</string>
+    <string name="engine_loading">Loading the model into memory…</string>
+    <string name="engine_ready">Model loaded and ready.</string>
+    <string name="importing">Copying model: %1$s</string>
+    <string name="no_space">Not enough free storage. %1$s is needed.</string>
+    <string name="enable_keyboard">Enable</string>
+    <string name="pick_keyboard">Switch keyboard</string>
+    <string name="ime_disabled">Not enabled. Tap Enable and turn on \"Tercüman\".</string>
+    <string name="ime_enabled">Enabled. Tap Switch keyboard to start using it.</string>
+    <string name="ime_selected">Tercüman is your current keyboard.</string>
+    <string name="try_hint">Yarın görüşürüz, akşam müsait misin?</string>
+    <string name="translate_tr_en">Turkish → English</string>
+    <string name="translate_en_tr">English → Turkish</string>
+    <string name="took_seconds">Took %1$.1f s (the first translation also loads the model).</string>
+    <string name="threads_auto">CPU threads: automatic (%1$d)</string>
+    <string name="threads_n">CPU threads: %1$d</string>
+    <string name="keep_loaded">Keep the model in memory for %1$d min after use</string>
+    <string name="number_row">Number row</string>
+    <string name="vibrate">Vibrate on key press</string>
+    <string name="delete_model">Delete model</string>
+    <string name="delete_model_confirm">Delete the translation model from this phone? You can download it again later.</string>
+    <string name="about">Translation model: TranslateGemma 4B by Google, provided under the Gemma Terms of Use (https://ai.google.dev/gemma/terms). Inference: llama.cpp (MIT licence). Tip: in any app you can also select text and choose \"Translate (Tercüman)\" from the menu.</string>
+</resources>

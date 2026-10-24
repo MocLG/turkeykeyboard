@@ -1,0 +1,3 @@
+-keep class com.tercuman.keyboard.engine.LlamaBridge { *; }
+-keep interface com.tercuman.keyboard.engine.LlamaBridge$PartialListener { *; }
+-keep class * implements com.tercuman.keyboard.engine.LlamaBridge$PartialListener { *; }

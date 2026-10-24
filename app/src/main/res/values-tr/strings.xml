@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tercüman Klavye</string>
+    <string name="ime_name">Tercüman (çevrimdışı çeviri)</string>
+    <string name="subtype_label">Türkçe (Q)</string>
+    <string name="process_text_label">Çevir (Tercüman)</string>
+
+    <string name="translate_button">Çevir %1$s</string>
+    <string name="stop">Durdur</string>
+    <string name="undo">Çeviriyi geri al</string>
+    <string name="panel_insert">Ekle</string>
+    <string name="panel_copy">Kopyala</string>
+    <string name="clipboard_button">Pano</string>
+    <string name="replace">Değiştir</string>
+    <string name="copied">Kopyalandı</string>
+    <string name="status_no_model">Çeviri modeli yüklü değil. Uygulamayı açmak için dokunun.</string>
+    <string name="status_loading">Çevirmen yükleniyor…</string>
+    <string name="status_translating">Çevriliyor…</string>
+    <string name="status_error">Hata: %1$s</string>
+    <string name="status_empty">Önce bir şey yazın.</string>
+    <string name="status_too_long">Metin çok uzun (en fazla %1$d karakter). Bir kısmını seçin.</string>
+    <string name="status_changed">Çeviri sırasında metin değişti. Çeviriyi eklemek için Ekle\'ye dokunun.</string>
+    <string name="status_clipboard_empty">Pano boş. Önce bir mesaj kopyalayın.</string>
+    <string name="status_clipboard">Pano %1$s</string>
+    <string name="status_undo_failed">Geri alınamadı: metin değişmiş.</string>
+    <string name="status_hint_tr">Türkçe yazın, sonra Çevir\'e dokunun.</string>
+    <string name="status_hint_en">İngilizce yazın, sonra Çevir\'e dokunun.</string>
+
+    <string name="setup_intro">Yazdıklarınızı tamamen bu telefonda çeviren bir klavye. Yazdığınız hiçbir şey bir yere gönderilmez.</string>
+    <string name="setup_model_title">1. Çeviri modeli</string>
+    <string name="setup_keyboard_title">2. Klavyeyi açın</string>
+    <string name="setup_try_title">3. Deneyin</string>
+    <string name="settings_title">Ayarlar</string>
+    <string name="download">İndir</string>
+    <string name="retry">Tekrar dene</string>
+    <string name="cancel">İptal</string>
+    <string name="import_model">Model dosyası seç…</string>
+    <string name="model_not_installed">%1$s henüz yüklü değil (%2$s). Bir kez indirilir. Sonrasında çeviri internetsiz çalışır. WiFi önerilir.</string>
+    <string name="model_downloading">Çeviri modeli indiriliyor: %1$s / %2$s. Bu ekrandan çıkabilirsiniz, indirme devam eder.</string>
+    <string name="model_verifying">İndirilen dosya kontrol ediliyor…</string>
+    <string name="model_installed">Yüklü: %1$s (%2$s).</string>
+    <string name="engine_idle">Hazır. Model, klavyeyi kullandığınızda yüklenir.</string>
+    <string name="engine_loading">Model belleğe yükleniyor…</string>
+    <string name="engine_ready">Model yüklü ve hazır.</string>
+    <string name="importing">Model kopyalanıyor: %1$s</string>
+    <string name="no_space">Yeterli boş alan yok. %1$s gerekiyor.</string>
+    <string name="enable_keyboard">Etkinleştir</string>
+    <string name="pick_keyboard">Klavyeyi değiştir</string>
+    <string name="ime_disabled">Etkin değil. Etkinleştir\'e dokunup \"Tercüman\"ı açın.</string>
+    <string name="ime_enabled">Etkin. Kullanmak için Klavyeyi değiştir\'e dokunun.</string>
+    <string name="ime_selected">Tercüman şu anki klavyeniz.</string>
+    <string name="try_hint">Yarın görüşürüz, akşam müsait misin?</string>
+    <string name="translate_tr_en">Türkçe → İngilizce</string>
+    <string name="translate_en_tr">İngilizce → Türkçe</string>
+    <string name="took_seconds">%1$.1f sn sürdü (ilk çeviri modeli de yükler).</string>
+    <string name="threads_auto">İşlemci çekirdeği: otomatik (%1$d)</string>
+    <string name="threads_n">İşlemci çekirdeği: %1$d</string>
+    <string name="keep_loaded">Modeli kullanımdan sonra %1$d dk bellekte tut</string>
+    <string name="number_row">Rakam satırı</string>
+    <string name="vibrate">Tuşlarda titreşim</string>
+    <string name="delete_model">Modeli sil</string>
+    <string name="delete_model_confirm">Çeviri modeli bu telefondan silinsin mi? Daha sonra tekrar indirebilirsiniz.</string>
+    <string name="about">Çeviri modeli: Google\'ın TranslateGemma 4B modeli, Gemma Kullanım Koşulları ile (https://ai.google.dev/gemma/terms). Çalıştırma: llama.cpp (MIT lisansı). İpucu: Herhangi bir uygulamada metni seçip menüden \"Çevir (Tercüman)\"ı da seçebilirsiniz.</string>
+</resources>
