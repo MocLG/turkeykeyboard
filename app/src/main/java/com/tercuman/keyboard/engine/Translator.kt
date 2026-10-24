@@ -61,6 +61,16 @@ class Translator private constructor(private val app: Context) {
         }
     }
 
+    fun reloadIfModelChanged() {
+        worker.execute {
+            val current = store.installedModel()?.absolutePath
+            if (loadedPath != null && loadedPath != current) {
+                freeNative()
+                setState(if (current != null) State.UNLOADED else State.NO_MODEL, null)
+            }
+        }
+    }
+
     fun preload() {
         if (state == State.READY || state == State.LOADING) {
             touch()

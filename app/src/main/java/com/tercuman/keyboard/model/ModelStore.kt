@@ -10,16 +10,36 @@ import java.io.IOException
 import java.io.InputStream
 import java.security.MessageDigest
 
-object DefaultModel {
-    const val DISPLAY_NAME = "TranslateGemma 4B (Q4_K_M)"
-    const val FILE_NAME = "translategemma-4b-it.Q4_K_M.gguf"
+enum class ModelOption(
+    val id: String,
+    val displayName: String,
+    val fileName: String,
+    val sha256: String,
+    val sizeBytes: Long,
+) {
+    STANDARD(
+        "q4",
+        "TranslateGemma 4B (Q4_K_M)",
+        "translategemma-4b-it.Q4_K_M.gguf",
+        "81200d03e843d2ec1ece6eeafe7d13cb6e5211e1fcd336ade55790b683a08330",
+        2_489_909_760L,
+    ),
+    HIGH_QUALITY(
+        "q8",
+        "TranslateGemma 4B (Q8_0)",
+        "translategemma-4b-it.Q8_0.gguf",
+        "f5006ddf207becaace1668113a61b31cf8b2e03f0f0baa0d1ca37eb8371d4bc1",
+        4_130_417_920L,
+    ),
+    ;
 
-    const val URL = "https://huggingface.co/mradermacher/translategemma-4b-it-GGUF/resolve/" +
-        "d37868f759d2f817a43d28dd80cf9f982ffa62fd/translategemma-4b-it.Q4_K_M.gguf"
-    const val SHA256 = "81200d03e843d2ec1ece6eeafe7d13cb6e5211e1fcd336ade55790b683a08330"
-    const val SIZE_BYTES = 2_489_909_760L
+    val url: String
+        get() = "https://huggingface.co/mradermacher/translategemma-4b-it-GGUF/resolve/" +
+            "d37868f759d2f817a43d28dd80cf9f982ffa62fd/$fileName"
 
-    const val LICENSE_URL = "https://ai.google.dev/gemma/terms"
+    companion object {
+        fun fromId(id: String?): ModelOption = values().firstOrNull { it.id == id } ?: STANDARD
+    }
 }
 
 sealed class DownloadState {
@@ -38,14 +58,23 @@ class ModelStore(private val context: Context) {
     private val dir: File
         get() = (context.getExternalFilesDir("models") ?: File(context.filesDir, "models")).also { it.mkdirs() }
 
-    val defaultModelFile: File get() = File(dir, DefaultModel.FILE_NAME)
-    private val partFile: File get() = File(dir, DefaultModel.FILE_NAME + ".part")
-    private val verifiedMarker: File get() = File(dir, DefaultModel.FILE_NAME + ".ok")
+    val model: ModelOption get() = settings.modelOption
+
+    private fun fileOf(m: ModelOption) = File(dir, m.fileName)
+    private fun markerOf(m: ModelOption) = File(dir, m.fileName + ".ok")
+
+    val defaultModelFile: File get() = fileOf(model)
+    private val partFile: File get() = File(dir, model.fileName + ".part")
+    private val verifiedMarker: File get() = markerOf(model)
+
+    private fun verified(m: ModelOption): File? {
+        val f = fileOf(m)
+        return if (f.isFile && markerOf(m).isFile && f.length() == m.sizeBytes) f else null
+    }
 
     fun installedModel(): File? {
         settings.customModelPath?.let { return File(it) }
-        val f = defaultModelFile
-        return if (f.isFile && verifiedMarker.isFile && f.length() == DefaultModel.SIZE_BYTES) f else null
+        return verified(model) ?: ModelOption.values().firstNotNullOfOrNull { verified(it) }
     }
 
     fun isInstalled(): Boolean = installedModel() != null
@@ -55,9 +84,9 @@ class ModelStore(private val context: Context) {
         if (existing >= 0 && queryRaw(existing) != null) return existing
 
         partFile.delete()
-        val req = DownloadManager.Request(Uri.parse(DefaultModel.URL))
+        val req = DownloadManager.Request(Uri.parse(model.url))
             .setTitle("Tercüman Klavye")
-            .setDescription(DefaultModel.DISPLAY_NAME)
+            .setDescription(model.displayName)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
             .setDestinationInExternalFilesDir(context, "models", partFile.name)
             .setAllowedOverMetered(true)
@@ -75,7 +104,7 @@ class ModelStore(private val context: Context) {
     }
 
     fun pollDownload(onVerifying: () -> Unit = {}): DownloadState {
-        if (isInstalled()) return DownloadState.Done
+        if (settings.customModelPath != null || verified(model) != null) return DownloadState.Done
         val id = settings.downloadId
         if (id < 0) return DownloadState.Idle
         val q = queryRaw(id) ?: run {
@@ -93,7 +122,7 @@ class ModelStore(private val context: Context) {
                 DownloadState.Failed("Download failed (code ${q.reason}). Check the internet connection and try again.")
             }
             DownloadManager.STATUS_PAUSED -> DownloadState.Paused(q.downloaded, q.total, pauseReason(q.reason))
-            else -> DownloadState.Running(q.downloaded, q.total.takeIf { it > 0 } ?: DefaultModel.SIZE_BYTES)
+            else -> DownloadState.Running(q.downloaded, q.total.takeIf { it > 0 } ?: model.sizeBytes)
         }
     }
 
@@ -104,7 +133,7 @@ class ModelStore(private val context: Context) {
             settings.downloadId = -1
             return DownloadState.Failed("Downloaded file is missing.")
         }
-        val ok = runCatching { f.inputStream().use { sha256(it) } == DefaultModel.SHA256 }.getOrDefault(false)
+        val ok = runCatching { f.inputStream().use { sha256(it) } == model.sha256 }.getOrDefault(false)
         if (!ok) {
             dm.remove(id)
             f.delete()
@@ -115,7 +144,11 @@ class ModelStore(private val context: Context) {
         if (!f.renameTo(defaultModelFile)) {
             return DownloadState.Failed("Could not save the model file.")
         }
-        verifiedMarker.writeText(DefaultModel.SHA256)
+        verifiedMarker.writeText(model.sha256)
+        ModelOption.values().filter { it != model }.forEach {
+            fileOf(it).delete()
+            markerOf(it).delete()
+        }
 
         settings.downloadId = -1
         runCatching { dm.remove(id) }
@@ -156,9 +189,17 @@ class ModelStore(private val context: Context) {
         settings.customModelPath = null
     }
 
+    fun selectModel(option: ModelOption) {
+        if (option == model) return
+        cancelDownload()
+        settings.modelOption = option
+    }
+
     fun deleteDefaultModel() {
-        defaultModelFile.delete()
-        verifiedMarker.delete()
+        ModelOption.values().forEach {
+            fileOf(it).delete()
+            markerOf(it).delete()
+        }
     }
 
     fun freeSpaceBytes(): Long = dir.usableSpace

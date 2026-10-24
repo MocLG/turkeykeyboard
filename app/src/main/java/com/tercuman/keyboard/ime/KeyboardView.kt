@@ -30,6 +30,8 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
         set(v) { field = v; invalidate() }
     var numberRow: Boolean = true
         set(v) { field = v; relayout() }
+    var letterLayout: LetterLayout = LetterLayout.QWERTY
+        set(v) { field = v; relayout() }
     var enterLabel: String = "⏎"
         set(v) { field = v; invalidate() }
     var vibrate: Boolean = true
@@ -54,6 +56,15 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
     private val accentColor = Color.rgb(0x1A, 0x73, 0xE8)
     private val textColor = if (dark) Color.rgb(0xE8, 0xEA, 0xED) else Color.rgb(0x20, 0x21, 0x24)
 
+    private val popupColor = if (dark) Color.rgb(0x4A, 0x4C, 0x52) else Color.WHITE
+    private val popupShadow = if (dark) Color.rgb(0x10, 0x10, 0x12) else Color.rgb(0x9A, 0xA0, 0xA6)
+
+    private var popupPointer = -1
+    private var popupOptions: List<String> = emptyList()
+    private var popupRects: List<RectF> = emptyList()
+    private var popupSelected = 0
+    private var longPressPointer = -1
+
     private val keyPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
@@ -65,7 +76,7 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
         isHapticFeedbackEnabled = true
     }
 
-    private fun rows() = Layouts.rows(page, numberRow)
+    private fun rows() = Layouts.rows(page, numberRow, letterLayout)
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val w = MeasureSpec.getSize(widthMeasureSpec)
@@ -98,6 +109,7 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
         }
         placed = result
         pressed.clear()
+        closePopup()
         requestLayout()
         invalidate()
     }
@@ -129,10 +141,82 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
             if (k.type == KeyType.SPACE) textPaint.color = (textColor and 0x00FFFFFF) or 0x80000000.toInt()
             val y = p.rect.centerY() - (textPaint.descent() + textPaint.ascent()) / 2f
             canvas.drawText(label, p.rect.centerX(), y, textPaint)
+            if (k.type == KeyType.CHAR && k.alternates.isNotEmpty() && page == Page.LETTERS) {
+                val hint = displayText(k.alternates.first())
+                textPaint.textSize = 10 * dp
+                textPaint.typeface = Typeface.DEFAULT
+                textPaint.color = (textColor and 0x00FFFFFF) or 0x99000000.toInt()
+                canvas.drawText(hint, p.rect.right - 7 * dp, p.rect.top + 12 * dp, textPaint)
+                textPaint.color = textColor
+            }
             if (k.type == KeyType.SHIFT && shift == ShiftState.LOCKED) {
                 canvas.drawRect(p.rect.centerX() - 7 * dp, p.rect.bottom - 9 * dp,
                     p.rect.centerX() + 7 * dp, p.rect.bottom - 7 * dp, textPaint)
             }
+        }
+        drawPopup(canvas)
+    }
+
+    private fun drawPopup(canvas: Canvas) {
+        if (popupPointer < 0 || popupRects.isEmpty()) return
+        val outer = RectF(popupRects.first().left, popupRects.first().top, popupRects.last().right, popupRects.last().bottom)
+        keyPaint.color = popupShadow
+        canvas.drawRoundRect(RectF(outer.left - 1 * dp, outer.top - 1 * dp, outer.right + 1 * dp, outer.bottom + 2 * dp), corner, corner, keyPaint)
+        keyPaint.color = popupColor
+        canvas.drawRoundRect(outer, corner, corner, keyPaint)
+        textPaint.typeface = Typeface.DEFAULT
+        textPaint.textSize = 22 * dp
+        popupRects.forEachIndexed { i, r ->
+            if (i == popupSelected) {
+                keyPaint.color = accentColor
+                canvas.drawRoundRect(r, corner, corner, keyPaint)
+            }
+            textPaint.color = if (i == popupSelected) Color.WHITE else textColor
+            val y = r.centerY() - (textPaint.descent() + textPaint.ascent()) / 2f
+            canvas.drawText(displayText(popupOptions[i]), r.centerX(), y, textPaint)
+        }
+        textPaint.color = textColor
+    }
+
+    private fun displayText(s: String): String =
+        if (page == Page.LETTERS && shift != ShiftState.OFF) Layouts.upper(s) else s
+
+    private val longPressChar = Runnable {
+        val id = longPressPointer
+        val p = pressed.get(id) ?: return@Runnable
+        if (p.key.type != KeyType.CHAR || p.key.alternates.isEmpty()) return@Runnable
+        openPopup(id, p)
+    }
+
+    private fun openPopup(pointerId: Int, p: Placed) {
+        val options = p.key.alternates
+        val cellW = maxOf(p.rect.width(), 34 * dp)
+        val cellH = rowHeight - gap
+        val totalW = cellW * options.size
+        var left = p.rect.centerX() - cellW / 2f
+        left = left.coerceIn(gap, maxOf(gap, width - gap - totalW))
+        val top = maxOf(0f, p.rect.top - rowHeight)
+        popupRects = options.indices.map { i -> RectF(left + i * cellW, top, left + (i + 1) * cellW, top + cellH) }
+        popupOptions = options
+        popupSelected = 0
+        popupPointer = pointerId
+        if (vibrate) performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        invalidate()
+    }
+
+    private fun closePopup() {
+        popupPointer = -1
+        popupOptions = emptyList()
+        popupRects = emptyList()
+    }
+
+    private fun updatePopupSelection(x: Float) {
+        if (popupRects.isEmpty()) return
+        val i = popupRects.indexOfFirst { x < it.right }
+        val sel = if (i < 0) popupRects.size - 1 else i
+        if (sel != popupSelected) {
+            popupSelected = sel
+            invalidate()
         }
     }
 
@@ -190,6 +274,11 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
                         handler.postDelayed(repeatBackspace, 400)
                     }
                     KeyType.SPACE -> handler.postDelayed(longPressSpace, 500)
+                    KeyType.CHAR -> if (p.key.alternates.isNotEmpty()) {
+                        handler.removeCallbacks(longPressChar)
+                        longPressPointer = e.getPointerId(idx)
+                        handler.postDelayed(longPressChar, 350)
+                    }
                     else -> Unit
                 }
                 invalidate()
@@ -197,6 +286,10 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
             MotionEvent.ACTION_MOVE -> {
                 for (i in 0 until e.pointerCount) {
                     val id = e.getPointerId(i)
+                    if (id == popupPointer) {
+                        updatePopupSelection(e.getX(i))
+                        continue
+                    }
                     val cur = pressed.get(id) ?: continue
                     if (cur.key.type == KeyType.BACKSPACE || cur.key.type == KeyType.SPACE) continue
                     val p = keyAt(e.getX(i), e.getY(i))
@@ -210,6 +303,7 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
                 release(e.getPointerId(e.actionIndex), commit = true)
             }
             MotionEvent.ACTION_CANCEL -> {
+                closePopup()
                 for (i in pressed.size() - 1 downTo 0) release(pressed.keyAt(i), commit = false)
             }
         }
@@ -232,7 +326,17 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
         pressed.remove(pointerId)
         handler.removeCallbacks(repeatBackspace)
         handler.removeCallbacks(longPressSpace)
-        if (p != null && commit && p.key.type != KeyType.BACKSPACE) listener.onKey(p.key)
+        if (pointerId == longPressPointer) {
+            handler.removeCallbacks(longPressChar)
+            longPressPointer = -1
+        }
+        if (pointerId == popupPointer) {
+            val chosen = popupOptions.getOrNull(popupSelected)
+            closePopup()
+            if (commit && chosen != null) listener.onKey(Key(KeyType.CHAR, chosen))
+        } else if (p != null && commit && p.key.type != KeyType.BACKSPACE) {
+            listener.onKey(p.key)
+        }
         invalidate()
     }
 
@@ -244,5 +348,6 @@ class KeyboardView(context: Context, private val listener: Listener) : View(cont
         super.onDetachedFromWindow()
         handler.removeCallbacksAndMessages(null)
         pressed.clear()
+        closePopup()
     }
 }

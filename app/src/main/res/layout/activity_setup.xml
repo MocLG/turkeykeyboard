@@ -31,6 +31,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <RadioGroup
+            android:id="@+id/modelChoice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <RadioButton
+                android:id="@+id/modelStandard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/model_standard" />
+
+            <RadioButton
+                android:id="@+id/modelHigh"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/model_high" />
+        </RadioGroup>
+
         <ProgressBar
             android:id="@+id/modelProgress"
             style="?android:attr/progressBarStyleHorizontal"
@@ -165,6 +184,13 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/number_row" />
+
+        <Switch
+            android:id="@+id/turkishQSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/turkish_q_layout" />
 
         <Switch
             android:id="@+id/vibrateSwitch"

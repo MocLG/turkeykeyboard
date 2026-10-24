@@ -163,6 +163,7 @@ class TercumanIme : InputMethodService(), KeyboardView.Listener, Translator.Stat
         val kb = keyboard ?: return
         kb.vibrate = settings.vibrate
         kb.numberRow = settings.showNumberRow
+        kb.letterLayout = if (settings.turkishQLayout) LetterLayout.TURKISH_Q else LetterLayout.QWERTY
         val cls = info.inputType and InputType.TYPE_MASK_CLASS
         kb.page = if (cls == InputType.TYPE_CLASS_NUMBER || cls == InputType.TYPE_CLASS_PHONE ||
             cls == InputType.TYPE_CLASS_DATETIME) Page.SYMBOLS else Page.LETTERS

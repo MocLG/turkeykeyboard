@@ -15,6 +15,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
@@ -24,7 +25,7 @@ import com.tercuman.keyboard.R
 import com.tercuman.keyboard.Settings
 import com.tercuman.keyboard.engine.Direction
 import com.tercuman.keyboard.engine.Translator
-import com.tercuman.keyboard.model.DefaultModel
+import com.tercuman.keyboard.model.ModelOption
 import com.tercuman.keyboard.model.DownloadState
 import com.tercuman.keyboard.model.ModelStore
 import java.util.concurrent.CancellationException
@@ -78,6 +79,7 @@ class SetupActivity : Activity(), Translator.StateListener {
         findViewById<Button>(R.id.tryReverseBtn).setOnClickListener { tryTranslate(Direction.EN_TO_TR) }
         findViewById<Button>(R.id.deleteModelBtn).setOnClickListener { confirmDelete() }
         setUpSettings()
+        setUpModelChoice()
 
         if (savedInstanceState == null && !store.isInstalled() && settings.downloadId < 0 && !autoStarted()) {
             markAutoStarted()
@@ -122,7 +124,7 @@ class SetupActivity : Activity(), Translator.StateListener {
     }
 
     private fun startDownload() {
-        val need = DefaultModel.SIZE_BYTES + 200L * 1024 * 1024
+        val need = store.model.sizeBytes + 200L * 1024 * 1024
         if (store.freeSpaceBytes() < need) {
             refreshModelUi(DownloadState.Failed(getString(R.string.no_space, gb(need))))
             return
@@ -141,7 +143,10 @@ class SetupActivity : Activity(), Translator.StateListener {
                     val s = store.pollDownload(onVerifying = { main.post { refreshModelUi(DownloadState.Verifying) } })
                     main.post {
                         refreshModelUi(s)
-                        if (s is DownloadState.Done) translator.refreshModelState()
+                        if (s is DownloadState.Done) {
+                            translator.refreshModelState()
+                            translator.reloadIfModelChanged()
+                        }
                         if (polling && (s is DownloadState.Running || s is DownloadState.Paused)) {
                             main.postDelayed(this, 1000)
                         } else {
@@ -162,7 +167,7 @@ class SetupActivity : Activity(), Translator.StateListener {
         importBtn.isEnabled = true
         when (s) {
             DownloadState.Idle -> {
-                modelStatus.text = getString(R.string.model_not_installed, DefaultModel.DISPLAY_NAME, gb(DefaultModel.SIZE_BYTES))
+                modelStatus.text = getString(R.string.model_not_installed, store.model.displayName, gb(store.model.sizeBytes))
                 downloadBtn.text = getString(R.string.download)
             }
             is DownloadState.Running -> {
@@ -305,6 +310,28 @@ class SetupActivity : Activity(), Translator.StateListener {
             })
     }
 
+    private fun setUpModelChoice() {
+        val group = findViewById<RadioGroup>(R.id.modelChoice)
+        fun idFor(m: ModelOption) = if (m == ModelOption.HIGH_QUALITY) R.id.modelHigh else R.id.modelStandard
+        group.check(idFor(store.model))
+        group.setOnCheckedChangeListener { g, checkedId ->
+            val chosen = if (checkedId == R.id.modelHigh) ModelOption.HIGH_QUALITY else ModelOption.STANDARD
+            if (chosen == store.model) return@setOnCheckedChangeListener
+            AlertDialog.Builder(this)
+                .setMessage(getString(R.string.model_switch_confirm, chosen.displayName, gb(chosen.sizeBytes)))
+                .setPositiveButton(R.string.download) { _, _ ->
+                    store.selectModel(chosen)
+                    main.postDelayed({
+                        translator.refreshModelState()
+                        startDownload()
+                    }, 300)
+                }
+                .setNegativeButton(R.string.cancel) { _, _ -> g.check(idFor(store.model)) }
+                .setOnCancelListener { g.check(idFor(store.model)) }
+                .show()
+        }
+    }
+
     private fun setUpSettings() {
         val threadsLabel = findViewById<TextView>(R.id.threadsLabel)
         val threadsSeek = findViewById<SeekBar>(R.id.threadsSeek)
@@ -343,6 +370,10 @@ class SetupActivity : Activity(), Translator.StateListener {
         findViewById<Switch>(R.id.numberRowSwitch).apply {
             isChecked = settings.showNumberRow
             setOnCheckedChangeListener { _, v -> settings.showNumberRow = v }
+        }
+        findViewById<Switch>(R.id.turkishQSwitch).apply {
+            isChecked = settings.turkishQLayout
+            setOnCheckedChangeListener { _, v -> settings.turkishQLayout = v }
         }
         findViewById<Switch>(R.id.vibrateSwitch).apply {
             isChecked = settings.vibrate

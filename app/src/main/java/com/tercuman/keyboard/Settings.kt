@@ -3,6 +3,7 @@ package com.tercuman.keyboard
 import android.content.Context
 import android.content.SharedPreferences
 import com.tercuman.keyboard.engine.Direction
+import com.tercuman.keyboard.model.ModelOption
 import java.io.File
 
 class Settings(context: Context) {
@@ -29,6 +30,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean(KEY_NUMBER_ROW, true)
         set(v) = prefs.edit().putBoolean(KEY_NUMBER_ROW, v).apply()
 
+    var turkishQLayout: Boolean
+        get() = prefs.getBoolean(KEY_TURKISH_Q, false)
+        set(v) = prefs.edit().putBoolean(KEY_TURKISH_Q, v).apply()
+
+    var modelOption: ModelOption
+        get() = ModelOption.fromId(prefs.getString(KEY_MODEL, null))
+        set(v) = prefs.edit().putString(KEY_MODEL, v.id).apply()
+
     var customModelPath: String?
         get() = prefs.getString(KEY_CUSTOM_MODEL, null)?.takeIf { File(it).isFile }
         set(v) = prefs.edit().putString(KEY_CUSTOM_MODEL, v).apply()
@@ -41,6 +50,8 @@ class Settings(context: Context) {
 
     companion object {
         private const val KEY_THREADS = "threads"
+        private const val KEY_MODEL = "model_option"
+        private const val KEY_TURKISH_Q = "turkish_q_layout"
         private const val KEY_KEEP = "keep_loaded_minutes"
         private const val KEY_DIRECTION = "direction"
         private const val KEY_VIBRATE = "vibrate"

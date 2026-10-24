@@ -9,11 +9,14 @@ data class Key(
     val text: String = "",
     val width: Float = 1f,
     val gapBefore: Float = 0f,
+    val alternates: List<String> = emptyList(),
 )
 
 typealias Row = List<Key>
 
 enum class Page { LETTERS, SYMBOLS, MORE_SYMBOLS }
+
+enum class LetterLayout { QWERTY, TURKISH_Q }
 
 object Layouts {
     const val COLUMNS = 12f
@@ -25,7 +28,33 @@ object Layouts {
 
     private val numberRow: Row = chars("1 2 3 4 5 6 7 8 9 0", 1.2f)
 
-    private val letters: List<Row> = listOf(
+    private val qwertyAlternates: Map<String, List<String>> = mapOf(
+        "q" to listOf("1"),
+        "w" to listOf("2"),
+        "e" to listOf("3", "é", "ê"),
+        "r" to listOf("4"),
+        "t" to listOf("5"),
+        "y" to listOf("6"),
+        "u" to listOf("ü", "7", "û"),
+        "i" to listOf("ı", "8", "î"),
+        "o" to listOf("ö", "9", "ô"),
+        "p" to listOf("0"),
+        "a" to listOf("â"),
+        "s" to listOf("ş"),
+        "g" to listOf("ğ"),
+        "c" to listOf("ç"),
+    )
+
+    private fun qwertyKeys(s: String, width: Float): List<Key> =
+        chars(s, width).map { it.copy(alternates = qwertyAlternates[it.text].orEmpty()) }
+
+    private val qwerty: List<Row> = listOf(
+        qwertyKeys("q w e r t y u i o p", 1.2f),
+        qwertyKeys("a s d f g h j k l", 1.2f),
+        listOf(Key(KeyType.SHIFT, "⇧", 1.8f)) + qwertyKeys("z x c v b n m", 1.2f) + Key(KeyType.BACKSPACE, "⌫", 1.8f),
+    )
+
+    private val turkishQ: List<Row> = listOf(
         chars("q w e r t y u ı o p ğ ü"),
         listOf(Key(KeyType.CHAR, "a", gapBefore = 0.5f)) + chars("s d f g h j k l ş i"),
         listOf(Key(KeyType.SHIFT, "⇧", 1.5f)) + chars("z x c v b n m ö ç") + Key(KeyType.BACKSPACE, "⌫", 1.5f),
@@ -54,8 +83,9 @@ object Layouts {
         Key(KeyType.ENTER, "⏎", 2.5f),
     )
 
-    fun rows(page: Page, numberRowOnLetters: Boolean): List<Row> = when (page) {
-        Page.LETTERS -> (if (numberRowOnLetters) listOf(numberRow) else emptyList()) + letters + listOf(bottomRow(page))
+    fun rows(page: Page, numberRowOnLetters: Boolean, layout: LetterLayout = LetterLayout.QWERTY): List<Row> = when (page) {
+        Page.LETTERS -> (if (numberRowOnLetters) listOf(numberRow) else emptyList()) +
+            (if (layout == LetterLayout.QWERTY) qwerty else turkishQ) + listOf(bottomRow(page))
         Page.SYMBOLS -> symbols + listOf(bottomRow(page))
         Page.MORE_SYMBOLS -> moreSymbols + listOf(bottomRow(page))
     }
